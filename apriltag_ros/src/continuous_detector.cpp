@@ -31,7 +31,7 @@
 
 #include "apriltag_ros/continuous_detector.h"
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 
 PLUGINLIB_EXPORT_CLASS(apriltag_ros::ContinuousDetector, nodelet::Nodelet);
 
@@ -48,9 +48,15 @@ void ContinuousDetector::onInit ()
   it_ = std::shared_ptr<image_transport::ImageTransport>(
       new image_transport::ImageTransport(nh));
 
+  std::string transport_hint;
+  pnh.param<std::string>("transport_hint", transport_hint, "raw");
+
+  int queue_size;
+  pnh.param<int>("queue_size", queue_size, 1);
   camera_image_subscriber_ =
-      it_->subscribeCamera("image_rect", 1,
-                          &ContinuousDetector::imageCallback, this);
+      it_->subscribeCamera("image_rect", queue_size,
+                          &ContinuousDetector::imageCallback, this,
+                          image_transport::TransportHints(transport_hint));
   tag_detections_publisher_ =
       nh.advertise<AprilTagDetectionArray>("tag_detections", 1);
   if (draw_tag_detections_image_)
